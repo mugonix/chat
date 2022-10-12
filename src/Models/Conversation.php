@@ -92,7 +92,7 @@ class Conversation extends BaseModel
      */
     public function unread_count()
     {
-        return $this->hasOne(MessageNotification::class);
+        return $this->hasOne(MessageNotification::class)->where('is_seen', '=', 0);
     }
 
     /**
