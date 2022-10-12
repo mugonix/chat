@@ -392,14 +392,12 @@ class Conversation extends BaseModel
                         ->where($this->tablePrefix.'message_notifications.messageable_type', $participant->getMorphClass())
                         ->whereNull($this->tablePrefix.'message_notifications.deleted_at');
                 },
-                'conversation.unread_count'
-//                'conversation.message_notifications' => function($query) use ($participant) {
-//                    $query->where(function ($q) use ($participant) {
-//                        $q->where('messageable_id', $participant->getKey())
-//                            ->where('messageable_type', $participant->getMorphClass());
-//                    })->where('is_seen', false);
-//
-//                }
+                'conversation.unread_count' => function($query) use ($participant) {
+                    $query->where(function ($q) use ($participant) {
+                        $q->where('messageable_id', $participant->getKey())
+                            ->where('messageable_type', $participant->getMorphClass());
+                    });
+                }
             ]);
 
 //        if (isset($options['filters']['include_unread_count']) && $options['filters']['include_unread_count']) {
