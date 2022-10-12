@@ -42,6 +42,16 @@ class Conversation extends BaseModel
      *
      * @return HasMany
      */
+    public function message_notifications()
+    {
+        return $this->hasMany(MessageNotification::class);
+    }
+
+    /**
+     * Conversation participants.
+     *
+     * @return HasMany
+     */
     public function participants()
     {
         return $this->hasMany(Participation::class);
@@ -372,6 +382,14 @@ class Conversation extends BaseModel
                         ->whereNull($this->tablePrefix.'message_notifications.deleted_at');
                 },
             ]);
+
+        if (isset($options['filters']['include_unread_count'])) {
+            $paginator = $paginator->withCount(['message_notifications as unread_count' => function($query) use ($participant) {
+                $query->where('messageable_id', $participant->getKey())
+                    ->where('messageable_type', $participant->getMorphClass())
+                    ->where('is_seen', 0);
+            }]);
+        }
 
         if (isset($options['filters']['private'])) {
             $paginator = $paginator->where('c.private', (bool) $options['filters']['private']);
