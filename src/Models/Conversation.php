@@ -47,6 +47,16 @@ class Conversation extends BaseModel
         return $this->hasMany(Participation::class);
     }
 
+    /**
+     * Conversation participants.
+     *
+     * @return HasOne
+     */
+    public function participant()
+    {
+        return $this->hasOne(Participation::class);
+    }
+
     public function getParticipants()
     {
         return $this->participants()->get()->pluck('messageable');
@@ -361,7 +371,6 @@ class Conversation extends BaseModel
                         ->where($this->tablePrefix.'message_notifications.messageable_type', $participant->getMorphClass())
                         ->whereNull($this->tablePrefix.'message_notifications.deleted_at');
                 },
-                'conversation.participants.messageable',
             ]);
 
         if (isset($options['filters']['private'])) {
@@ -369,7 +378,16 @@ class Conversation extends BaseModel
         }
 
         if (isset($options['filters']['direct_message'])) {
-            $paginator = $paginator->where('c.direct_message', (bool) $options['filters']['direct_message']);
+            $paginator = $paginator
+                ->with(['conversation.participant' => function ($query) use ($participant) {
+                    $query->whereNot(function ($q)  use ($participant) {
+                        $q->where('messageable_id', $participant->getKey())
+                        ->where('messageable_type', $participant->getMorphClass());
+                    });
+                }, 'conversation.participant.messageable'])
+                ->where('c.direct_message', (bool) $options['filters']['direct_message']);
+        } else {
+            $paginator = $paginator->with(['conversation.participants.messageable']);
         }
 
         return $paginator
