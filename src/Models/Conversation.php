@@ -424,11 +424,12 @@ class Conversation extends BaseModel
             $paginator = $paginator->where('c.direct_message', $direct_message);
         }
 
+//        $this->tablePrefix.'participation.*', 'c.*'
         return $paginator
             ->orderBy('c.updated_at', 'DESC')
             ->orderBy('c.id', 'DESC')
             ->distinct('c.id')
-            ->paginate($options['perPage'], [$this->tablePrefix.'participation.*', 'c.*'], $options['pageName'], $options['page']);
+            ->paginate($options['perPage'], ['*'], $options['pageName'], $options['page']);
     }
 
     public function unDeletedCount()
