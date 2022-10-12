@@ -384,7 +384,7 @@ class Conversation extends BaseModel
             ]);
 
         if (isset($options['filters']['include_unread_count']) && $options['filters']['include_unread_count']) {
-            $paginator = $paginator->withCount(['message_notifications as unread_count' => function($query) use ($participant) {
+            $paginator = $paginator->withCount(['conversation.message_notifications as unread_count' => function($query) use ($participant) {
                 $query->where('messageable_id', $participant->getKey())
                     ->where('messageable_type', $participant->getMorphClass())
                     ->where('is_seen', 0);
