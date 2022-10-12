@@ -372,6 +372,11 @@ class Conversation extends BaseModel
     {
         /** @var Builder $paginator */
         $paginator = $participant->participation()
+            ->with([
+                'conversation' =>  function ($query) use ($participant) {
+                    $query->withCount('message_notifications');
+                }
+            ])
             ->join($this->tablePrefix.'conversations as c', $this->tablePrefix.'participation.conversation_id', '=', 'c.id')
             ->with([
                 'conversation.last_message' => function ($query) use ($participant) {
@@ -381,9 +386,7 @@ class Conversation extends BaseModel
                         ->where($this->tablePrefix.'message_notifications.messageable_type', $participant->getMorphClass())
                         ->whereNull($this->tablePrefix.'message_notifications.deleted_at');
                 },
-                'conversation' =>  function ($query) use ($participant) {
-                $query->withCount('message_notifications');
-                }
+
 //                'conversation.message_notifications' => function($query) use ($participant) {
 //                    $query->where(function ($q) use ($participant) {
 //                        $q->where('messageable_id', $participant->getKey())
