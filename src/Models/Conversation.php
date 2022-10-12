@@ -396,7 +396,7 @@ class Conversation extends BaseModel
                     $query->where(function ($q) use ($participant) {
                         $q->where('messageable_id', $participant->getKey())
                             ->where('messageable_type', $participant->getMorphClass());
-                    })->select(DB::raw(sprintf("count(%smessage_notifications.id)", $this->tablePrefix)));
+                    })->select('conversation_id', DB::raw("id)"));
                 }
             ]);
 
