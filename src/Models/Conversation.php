@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Musonza\Chat\BaseModel;
 use Musonza\Chat\ConfigurationManager;
 use Musonza\Chat\Eventing\AllParticipantsClearedConversation;
@@ -82,6 +83,17 @@ class Conversation extends BaseModel
         return $this->hasOne(Message::class)
             ->orderBy($this->tablePrefix.'messages.id', 'desc')
             ->with('participation');
+    }
+
+    /**
+     * Return the recent message in a Conversation.
+     *
+     * @return HasOne
+     */
+    public function unread_count()
+    {
+        return $this->hasOne(MessageNotification::class)
+            ->where('is_seen', false)->select(DB::raw('count(*) as total'));
     }
 
     /**
@@ -372,11 +384,6 @@ class Conversation extends BaseModel
     {
         /** @var Builder $paginator */
         $paginator = $participant->participation()
-            ->with([
-                'conversation' =>  function ($query) use ($participant) {
-                    $query->withCount('message_notifications');
-                }
-            ])
             ->join($this->tablePrefix.'conversations as c', $this->tablePrefix.'participation.conversation_id', '=', 'c.id')
             ->with([
                 'conversation.last_message' => function ($query) use ($participant) {
@@ -386,7 +393,7 @@ class Conversation extends BaseModel
                         ->where($this->tablePrefix.'message_notifications.messageable_type', $participant->getMorphClass())
                         ->whereNull($this->tablePrefix.'message_notifications.deleted_at');
                 },
-
+                'conversation.unread_count'
 //                'conversation.message_notifications' => function($query) use ($participant) {
 //                    $query->where(function ($q) use ($participant) {
 //                        $q->where('messageable_id', $participant->getKey())
