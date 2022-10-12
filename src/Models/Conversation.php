@@ -381,18 +381,26 @@ class Conversation extends BaseModel
                         ->where($this->tablePrefix.'message_notifications.messageable_type', $participant->getMorphClass())
                         ->whereNull($this->tablePrefix.'message_notifications.deleted_at');
                 },
+                'conversation' => function($query) use ($participant) {
+                    $query->withCount([
+                        'message_notifications as unread_count' => function($query) use ($participant) {
+                            $query->where('messageable_id', $participant->getKey())
+                                ->where('messageable_type', $participant->getMorphClass())
+                                ->where('is_seen', 0);
+                        }]);
+                }
             ]);
 
-        if (isset($options['filters']['include_unread_count']) && $options['filters']['include_unread_count']) {
-            $paginator = $paginator->with(['conversation' => function($query) use ($participant) {
-                $query->withCount([
-                    'message_notifications as unread_count' => function($query) use ($participant) {
-                    $query->where('messageable_id', $participant->getKey())
-                        ->where('messageable_type', $participant->getMorphClass())
-                        ->where('is_seen', 0);
-                }]);
-            }]);
-        }
+//        if (isset($options['filters']['include_unread_count']) && $options['filters']['include_unread_count']) {
+//            $paginator = $paginator->with(['conversation' => function($query) use ($participant) {
+//                $query->withCount([
+//                    'message_notifications as unread_count' => function($query) use ($participant) {
+//                    $query->where('messageable_id', $participant->getKey())
+//                        ->where('messageable_type', $participant->getMorphClass())
+//                        ->where('is_seen', 0);
+//                }]);
+//            }]);
+//        }
 
         if (isset($options['filters']['private'])) {
             $paginator = $paginator->where('c.private', (bool) $options['filters']['private']);
