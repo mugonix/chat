@@ -191,6 +191,19 @@ class ConversationService
         return $this;
     }
 
+    /**
+     * Sets the conversation type to query for direct conversations.
+     *
+     * @param bool $includeUnreadCount
+     * @return $this
+     */
+    public function includeUnreadCount($includeUnreadCount = true)
+    {
+        $this->filters['include_unread_count'] = $includeUnreadCount;
+
+        return $this;
+    }
+
     public function getParticipation($participant = null)
     {
         $participant = $participant ?? $this->participant;

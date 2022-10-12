@@ -383,7 +383,7 @@ class Conversation extends BaseModel
                 },
             ]);
 
-        if (isset($options['filters']['include_unread_count'])) {
+        if (isset($options['filters']['include_unread_count']) && $options['filters']['include_unread_count']) {
             $paginator = $paginator->withCount(['message_notifications as unread_count' => function($query) use ($participant) {
                 $query->where('messageable_id', $participant->getKey())
                     ->where('messageable_type', $participant->getMorphClass())
@@ -396,16 +396,21 @@ class Conversation extends BaseModel
         }
 
         if (isset($options['filters']['direct_message'])) {
-            $paginator = $paginator
-                ->with(['conversation.participant' => function ($query) use ($participant) {
-                    $query->whereNot(function ($q)  use ($participant) {
-                        $q->where('messageable_id', $participant->getKey())
-                        ->where('messageable_type', $participant->getMorphClass());
-                    });
-                }, 'conversation.participant.messageable'])
-                ->where('c.direct_message', (bool) $options['filters']['direct_message']);
-        } else {
-            $paginator = $paginator->with(['conversation.participants.messageable']);
+            $direct_message = (bool) $options['filters']['direct_message'];
+
+            if($direct_message) {
+                $paginator = $paginator
+                    ->with(['conversation.participant' => function ($query) use ($participant) {
+                        $query->whereNot(function ($q) use ($participant) {
+                            $q->where('messageable_id', $participant->getKey())
+                                ->where('messageable_type', $participant->getMorphClass());
+                        });
+                    }, 'conversation.participant.messageable']);
+            }else {
+                $paginator = $paginator->with(['conversation.participants.messageable']);
+            }
+
+            $paginator = $paginator->where('c.direct_message', $direct_message);
         }
 
         return $paginator
