@@ -100,6 +100,18 @@ class Chat
     }
 
     /**
+     * Sets Conversation.
+     *
+     * @param Conversation $conversation
+     *
+     * @return ConversationService
+     */
+    public function conversationById($conversationId)
+    {
+        return $this->conversationService->setConversation(Conversation::find($conversationId));
+    }
+
+    /**
      * Gets ConversationService.
      *
      * @return ConversationService
