@@ -2,6 +2,7 @@
 
 namespace Musonza\Chat;
 
+use Musonza\Chat\Exceptions\InvalidDirectMessageNumberOfParticipants;
 use Musonza\Chat\Models\Conversation;
 use Musonza\Chat\Models\MessageNotification;
 use Musonza\Chat\Services\ConversationService;
@@ -58,6 +59,36 @@ class Chat
         return $this->conversationService->start($payload);
     }
 
+    /**
+     * Creates a new conversation.
+     *
+     * @param array $participants
+     * @param array $data
+     *
+     * @return Conversation
+     * @throws InvalidDirectMessageNumberOfParticipants
+     */
+    public function getOrStartDirectConversation(array $participants, array $data = [])
+    {
+        if(count($participants) != 2)
+        {
+            throw new InvalidDirectMessageNumberOfParticipants();
+        }
+
+        if($conversation = $this->conversationService->between($participants[0], $participants[1]))
+        {
+            return $conversation;
+        }
+
+        $payload = [
+            'participants'   => $participants,
+            'data'           => $data,
+            'direct_message' => true,
+        ];
+
+        return $this->conversationService->start($payload);
+    }
+
     public function makeDirect()
     {
         $this->conversationService->directMessage = true;
@@ -109,6 +140,24 @@ class Chat
     public function conversationById($conversationId)
     {
         return $this->conversationService->setConversation(Conversation::find($conversationId));
+    }
+
+
+    /**
+     * Sets Conversation.
+     *
+     * @param $participant1
+     * @param $participant2
+     * @return ConversationService|null
+     */
+    public function conversationByParticipants($participant1, $participant2)
+    {
+        if(!($conversation = $this->conversationService->between($participant1, $participant2)))
+        {
+            return null;
+        }
+
+        return $this->conversationService->setConversation($conversation);
     }
 
     /**
