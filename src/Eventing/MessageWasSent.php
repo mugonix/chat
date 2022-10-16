@@ -36,7 +36,9 @@ class MessageWasSent extends Event implements ShouldBroadcast
     {
         if($class = config('musonza_chat.broadcast_with_resource')){
             if(class_exists($class)){
-                return $class::make($this->message);
+                $jsonResponse = (new $class($this->message))->toResponse(app('request'));
+
+                return $jsonResponse->getData(true);
             }
         }
         return [
