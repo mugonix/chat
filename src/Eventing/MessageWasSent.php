@@ -34,6 +34,11 @@ class MessageWasSent extends Event implements ShouldBroadcast
 
     public function broadcastWith()
     {
+        if($class = config('musonza_chat.broadcast_with_resource')){
+            if(class_exists($class)){
+                return $class::make($this->message);
+            }
+        }
         return [
             'message' => [
                 'id'              => $this->message->getKey(),
