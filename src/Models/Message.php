@@ -145,9 +145,9 @@ class Message extends BaseModel
      *
      * @param Model $participant
      *
-     * @return MessageNotification
+     * @return MessageNotification|null
      */
-    public function getNotification(Model $participant): MessageNotification
+    public function getNotification(Model $participant): ?MessageNotification
     {
         return MessageNotification::where('messageable_id', $participant->getKey())
             ->where('messageable_type', $participant->getMorphClass())
