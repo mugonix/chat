@@ -3,6 +3,7 @@
 namespace Musonza\Chat\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
 use Musonza\Chat\BaseModel;
 use Musonza\Chat\Chat;
 use Musonza\Chat\ConfigurationManager;
@@ -74,6 +75,67 @@ class Message extends BaseModel
     public function conversation()
     {
         return $this->belongsTo(Conversation::class, 'conversation_id');
+    }
+
+    /**
+     * @param Model $participant
+     * @param $options
+     *
+     * @return mixed
+     */
+    public function getConversationEntity(Model $participant, $options)
+    {
+        /** @var Builder $paginator */
+        $paginator = $this->conversation()
+            ->join($this->tablePrefix.'conversations as c', $this->tablePrefix.'participation.conversation_id', '=', 'c.id')
+            ->with([
+                'last_message' => function ($query) use ($participant) {
+                    $query->join($this->tablePrefix.'message_notifications', $this->tablePrefix.'message_notifications.message_id', '=', $this->tablePrefix.'messages.id')
+                        ->select($this->tablePrefix.'message_notifications.*', $this->tablePrefix.'messages.*')
+                        ->where($this->tablePrefix.'message_notifications.messageable_id', $participant->getKey())
+                        ->where($this->tablePrefix.'message_notifications.messageable_type', $participant->getMorphClass())
+                        ->whereNull($this->tablePrefix.'message_notifications.deleted_at');
+                },
+            ]);
+
+        if (isset($options['filters']['include_unread_count']) && $options['filters']['include_unread_count']) {
+            $paginator = $paginator->with([
+                'unread_count' => function($query) use ($participant) {
+                    $query->where(function ($q) use ($participant) {
+                        $q->where('messageable_id', $participant->getKey())
+                            ->where('messageable_type', $participant->getMorphClass());
+                    });
+                }
+            ]);
+        }
+
+        if (isset($options['filters']['private'])) {
+            $paginator = $paginator->where('c.private', (bool) $options['filters']['private']);
+        }
+
+        if (isset($options['filters']['direct_message'])) {
+            $direct_message = (bool) $options['filters']['direct_message'];
+
+            if($direct_message) {
+                $paginator = $paginator
+                    ->with(['participant' => function ($query) use ($participant) {
+                        $query->whereNot(function ($q) use ($participant) {
+                            $q->where('messageable_id', $participant->getKey())
+                                ->where('messageable_type', $participant->getMorphClass());
+                        });
+                    }, 'participant.messageable']);
+            }else {
+                $paginator = $paginator->with(['participants.messageable']);
+            }
+
+            $paginator = $paginator->where('c.direct_message', $direct_message);
+        }
+
+        return $paginator
+            ->orderBy('c.updated_at', 'DESC')
+            ->orderBy('c.id', 'DESC')
+            ->distinct('c.id')
+            ->first();
     }
 
     /**
