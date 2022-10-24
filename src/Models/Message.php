@@ -87,7 +87,7 @@ class Message extends BaseModel
     {
         /** @var Builder $paginator */
         $paginator = $this->conversation()
-            ->join($this->tablePrefix.'participation.conversation_id', '=', 'conversations.id')
+            ->join($this->tablePrefix.'participation',$this->tablePrefix.'participation.conversation_id', '=', $this->tablePrefix.'conversations.id')
             ->with([
                 'last_message' => function ($query) use ($participant) {
                     $query->join($this->tablePrefix.'message_notifications', $this->tablePrefix.'message_notifications.message_id', '=', $this->tablePrefix.'messages.id')
@@ -110,7 +110,7 @@ class Message extends BaseModel
         }
 
         if (isset($options['filters']['private'])) {
-            $paginator = $paginator->where('conversations.private', (bool) $options['filters']['private']);
+            $paginator = $paginator->where($this->tablePrefix.'conversations.private', (bool) $options['filters']['private']);
         }
 
         if (isset($options['filters']['direct_message'])) {
@@ -128,13 +128,13 @@ class Message extends BaseModel
                 $paginator = $paginator->with(['participants.messageable']);
             }
 
-            $paginator = $paginator->where('conversations.direct_message', $direct_message);
+            $paginator = $paginator->where($this->tablePrefix.'conversations.direct_message', $direct_message);
         }
 
         return $paginator
-            ->orderBy('conversations.updated_at', 'DESC')
-            ->orderBy('conversations.id', 'DESC')
-            ->distinct('conversations.id')
+            ->orderBy($this->tablePrefix.'conversations.updated_at', 'DESC')
+            ->orderBy($this->tablePrefix.'conversations.id', 'DESC')
+            ->distinct($this->tablePrefix.'conversations.id')
             ->first();
     }
 
