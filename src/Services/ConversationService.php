@@ -175,6 +175,20 @@ class ConversationService
     }
 
     /**
+     * Sets the conversation type to query for, public or private.
+     *
+     * @param bool $isPrivate
+     *
+     * @return $this
+     */
+    public function searchParticipant($search)
+    {
+        $this->filters['participant_search'] = $search;
+
+        return $this;
+    }
+
+    /**
      * Sets the conversation type to query for direct conversations.
      *
      * @param bool $isDirectMessage

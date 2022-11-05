@@ -412,22 +412,33 @@ class Conversation extends BaseModel
             $paginator = $paginator->where('c.private', (bool) $options['filters']['private']);
         }
 
+        $messageable_relation = 'conversation.participants.messageable';
+
         if (isset($options['filters']['direct_message'])) {
             $direct_message = (bool) $options['filters']['direct_message'];
 
             if($direct_message) {
+                $messageable_relation = 'conversation.participant.messageable';
                 $paginator = $paginator
                     ->with(['conversation.participant' => function ($query) use ($participant) {
                         $query->whereNot(function ($q) use ($participant) {
                             $q->where('messageable_id', $participant->getKey())
                                 ->where('messageable_type', $participant->getMorphClass());
                         });
-                    }, 'conversation.participant.messageable']);
+                    }, $messageable_relation]);
             }else {
-                $paginator = $paginator->with(['conversation.participants.messageable']);
+                $paginator = $paginator->with([$messageable_relation]);
             }
 
             $paginator = $paginator->where('c.direct_message', $direct_message);
+        }
+
+        if(isset($options['filters']['participant_search']))
+        {
+            $participant_search = $options['filters']['participant_search'];
+            $paginator = $paginator->whereHas($messageable_relation, function($query) use ($participant_search){
+                $query->where('name', 'LIKE', "%$participant_search%");
+            });
         }
 
 //        $this->tablePrefix.'participation.*', 'c.*'
