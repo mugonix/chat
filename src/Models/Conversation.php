@@ -94,6 +94,7 @@ class Conversation extends BaseModel
     {
         return $this->hasOne(MessageNotification::class)
             ->select('conversation_id', DB::raw("COUNT(id) as total"))
+            ->groupBy('conversation_id')
             ->where('is_seen', '=', 0);
     }
 
