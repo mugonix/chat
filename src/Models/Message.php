@@ -139,7 +139,7 @@ class Message extends BaseModel
             ->orderBy($this->tablePrefix.'conversations.updated_at', 'DESC')
             ->orderBy($this->tablePrefix.'conversations.id', 'DESC')
             ->distinct($this->tablePrefix.'conversations.id')
-            ->first();
+            ->first([$this->tablePrefix.'participation.*', $this->tablePrefix.'conversations.*']);
     }
 
     /**
