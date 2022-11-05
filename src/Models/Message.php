@@ -88,6 +88,10 @@ class Message extends BaseModel
         /** @var Builder $paginator */
         $paginator = $this->conversation()
             ->join($this->tablePrefix.'participation',$this->tablePrefix.'participation.conversation_id', '=', $this->tablePrefix.'conversations.id')
+            ->where(function ($query) use ($participant) {
+                $query->where($this->tablePrefix.'participation.messageable_id', $participant->getKey())
+                    ->where($this->tablePrefix.'participation.messageable_type', $participant->getMorphClass());
+            })
             ->with([
                 'last_message' => function ($query) use ($participant) {
                     $query->join($this->tablePrefix.'message_notifications', $this->tablePrefix.'message_notifications.message_id', '=', $this->tablePrefix.'messages.id')
